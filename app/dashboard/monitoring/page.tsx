@@ -1,10 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MonitoringWorkbench } from "@/components/forms/monitoring-workbench";
 import { MonitoringTable } from "@/components/tables/monitoring-table";
-import { getMonitoringHits } from "@/lib/data";
+import { getCases, getMonitoringHits } from "@/lib/data";
 import { MONITORING_ADAPTERS } from "@/lib/constants";
 
 export default async function DashboardMonitoringPage() {
-  const hits = await getMonitoringHits();
+  const [hits, cases] = await Promise.all([getMonitoringHits(), getCases()]);
+  const counts = {
+    name: hits.filter((entry) => entry.matchType === "NAME").length,
+    place: hits.filter((entry) => entry.matchType === "PLACE").length,
+    manual: hits.filter((entry) => entry.matchType === "MANUAL_IMPORT").length,
+    underReview: hits.filter((entry) => entry.reviewStatus === "UNDER_REVIEW").length,
+  };
 
   return (
     <div className="space-y-6">
@@ -26,6 +33,28 @@ export default async function DashboardMonitoringPage() {
           </Card>
         ))}
       </div>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "Name matches", value: counts.name },
+          { label: "Place matches", value: counts.place },
+          { label: "Manual imports", value: counts.manual },
+          { label: "Under review", value: counts.underReview },
+        ].map((entry) => (
+          <Card key={entry.label}>
+            <CardContent className="p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                {entry.label}
+              </p>
+              <p className="mt-3 text-3xl font-semibold text-zinc-950 dark:text-white">
+                {entry.value}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <MonitoringWorkbench cases={cases} />
 
       <MonitoringTable hits={hits} />
 

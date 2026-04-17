@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { ExternalLink, MapPin } from "lucide-react";
 
@@ -18,6 +19,7 @@ export function MonitoringTable({ hits }: { hits: DemoMonitoringHit[] }) {
           <thead className="border-b border-zinc-200 text-xs uppercase tracking-[0.18em] text-zinc-500 dark:border-white/10">
             <tr>
               <th className="pb-4 font-semibold">Source</th>
+              <th className="pb-4 font-semibold">Match</th>
               <th className="pb-4 font-semibold">Snippet</th>
               <th className="pb-4 font-semibold">Location</th>
               <th className="pb-4 font-semibold">Confidence</th>
@@ -35,7 +37,24 @@ export function MonitoringTable({ hits }: { hits: DemoMonitoringHit[] }) {
                     </p>
                   </div>
                 </td>
+                <td className="py-4 pr-4 align-top">
+                  <div className="space-y-2">
+                    <p className="font-medium text-zinc-950 dark:text-white">
+                      {(hit.matchType ?? "KEYWORD").replaceAll("_", " ")}
+                    </p>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">{hit.query}</p>
+                  </div>
+                </td>
                 <td className="max-w-lg py-4 pr-4 align-top">
+                  {hit.mediaThumbnailUrl ? (
+                    <div className="mb-3 overflow-hidden rounded-lg border border-zinc-200/80 dark:border-white/10">
+                      <img
+                        src={hit.mediaThumbnailUrl}
+                        alt={hit.query}
+                        className="h-32 w-full object-cover"
+                      />
+                    </div>
+                  ) : null}
                   <p className="leading-7 text-zinc-700 dark:text-zinc-300">{hit.textSnippet}</p>
                   <div className="mt-2 flex items-center gap-2">
                     {hit.handle ? (

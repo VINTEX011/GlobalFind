@@ -23,6 +23,8 @@ import { type CaseFormValues, caseSchema } from "@/lib/validations/case";
 
 export function CaseReportForm() {
   const [submitting, setSubmitting] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [fileResetKey, setFileResetKey] = useState(0);
 
   const form = useForm<CaseFormValues>({
     resolver: zodResolver(caseSchema),
@@ -50,19 +52,46 @@ export function CaseReportForm() {
   const consent = useWatch({ control: form.control, name: "consent" });
 
   const onSubmit = form.handleSubmit(async (values) => {
+    if (!selectedImages.length) {
+      toast.error("Add case photos", {
+        description: "Upload at least one clear photo so TraceLink can create the case file.",
+      });
+      return;
+    }
+
     setSubmitting(true);
+    const payload = new FormData();
+
+    payload.append("fullName", values.fullName);
+    payload.append("nickname", values.nickname ?? "");
+    payload.append("age", String(values.age));
+    payload.append("gender", values.gender);
+    payload.append("lastSeenDate", values.lastSeenDate);
+    payload.append("lastSeenTime", values.lastSeenTime);
+    payload.append("lastSeenLocation", values.lastSeenLocation);
+    payload.append("city", values.city);
+    payload.append("county", values.county);
+    payload.append("country", values.country);
+    payload.append("physicalDescription", values.physicalDescription);
+    payload.append("clothingDescription", values.clothingDescription);
+    payload.append("distinguishingFeatures", values.distinguishingFeatures);
+    payload.append("summary", values.summary);
+    payload.append("emergencyContact", values.emergencyContact);
+    payload.append("policeReference", values.policeReference ?? "");
+    payload.append("privacyLevel", values.privacyLevel);
+    payload.append("consent", String(values.consent));
+    selectedImages.slice(0, 6).forEach((file) => payload.append("images", file));
 
     const response = await fetch("/api/cases", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
+      body: payload,
     });
-    const payload = await response.json();
+    const result = await response.json();
     setSubmitting(false);
 
     if (!response.ok) {
       toast.error("Case report failed", {
-        description: payload.message ?? "Please review the case file fields and try again.",
+        description: result.message ?? "Please review the case file fields and try again.",
       });
       return;
     }
@@ -72,6 +101,8 @@ export function CaseReportForm() {
         "The case has been added to the secure intake queue. Images and monitoring adapters can be expanded from the dashboard.",
     });
     form.reset();
+    setSelectedImages([]);
+    setFileResetKey((value) => value + 1);
   });
 
   return (
@@ -186,7 +217,28 @@ export function CaseReportForm() {
 
           <div className="space-y-2">
             <Label htmlFor="case-images">Upload up to 6 images</Label>
-            <Input id="case-images" type="file" accept="image/*" multiple />
+            <Input
+              key={fileResetKey}
+              id="case-images"
+              name="images"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(event) => {
+                const files = Array.from(event.target.files ?? []).slice(0, 6);
+                setSelectedImages(files);
+              }}
+            />
+            {selectedImages.length ? (
+              <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/80 p-3 text-sm dark:border-white/10 dark:bg-white/[0.04]">
+                <p className="font-medium text-zinc-950 dark:text-white">
+                  {selectedImages.length} image{selectedImages.length > 1 ? "s" : ""} selected
+                </p>
+                <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+                  {selectedImages.map((file) => file.name).join(", ")}
+                </p>
+              </div>
+            ) : null}
           </div>
 
           <label className="flex items-start gap-3 rounded-lg border border-zinc-200/80 p-4 dark:border-white/10">

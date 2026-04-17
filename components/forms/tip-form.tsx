@@ -34,6 +34,8 @@ export function TipForm({
   defaultCaseId?: string;
 }) {
   const [submitting, setSubmitting] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [fileResetKey, setFileResetKey] = useState(0);
   const form = useForm<TipValues>({
     resolver: zodResolver(tipSchema),
     defaultValues: {
@@ -51,25 +53,40 @@ export function TipForm({
 
   const onSubmit = form.handleSubmit(async (values) => {
     setSubmitting(true);
+    const payload = new FormData();
+
+    payload.append("caseId", values.caseId);
+    payload.append("description", values.description);
+    payload.append("seenDate", values.seenDate);
+    payload.append("seenTime", values.seenTime);
+    payload.append("location", values.location);
+    payload.append("confidence", values.confidence);
+    payload.append("anonymous", String(values.anonymous));
+    payload.append("contactInfo", values.contactInfo ?? "");
+
+    if (selectedPhoto) {
+      payload.append("photo", selectedPhoto);
+    }
 
     const response = await fetch("/api/tips", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
+      body: payload,
     });
-    const payload = await response.json();
+    const result = await response.json();
     setSubmitting(false);
 
     if (!response.ok) {
       toast.error("Tip not submitted", {
-        description: payload.message ?? "Check the form and try again.",
+        description: result.message ?? "Check the form and try again.",
       });
       return;
     }
 
     toast.success("Tip submitted", {
       description:
-        "Thank you. The tip has entered the manual review queue and will be assessed by TraceLink moderators.",
+        result.lead?.similarityScore
+          ? "Thank you. The tip entered review with a case-only possible similarity score for moderators to assess."
+          : "Thank you. The tip has entered the manual review queue and will be assessed by TraceLink moderators.",
     });
     form.reset({
       ...form.getValues(),
@@ -80,6 +97,8 @@ export function TipForm({
       contactInfo: "",
       anonymous: false,
     });
+    setSelectedPhoto(null);
+    setFileResetKey((value) => value + 1);
   });
 
   return (
@@ -204,7 +223,24 @@ export function TipForm({
 
           <div className="space-y-2">
             <Label htmlFor="tip-photo">Photo upload</Label>
-            <Input id="tip-photo" type="file" accept="image/*" />
+            <Input
+              key={fileResetKey}
+              id="tip-photo"
+              name="photo"
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                setSelectedPhoto(event.target.files?.[0] ?? null);
+              }}
+            />
+            {selectedPhoto ? (
+              <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/80 p-3 text-sm dark:border-white/10 dark:bg-white/[0.04]">
+                <p className="font-medium text-zinc-950 dark:text-white">{selectedPhoto.name}</p>
+                <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+                  Uploading a sighting photo triggers a case-only possible similarity review.
+                </p>
+              </div>
+            ) : null}
             <p className="text-sm leading-7 text-zinc-500 dark:text-zinc-400">
               Uploading a photo only creates a possible lead for manual review. It never verifies identity.
             </p>

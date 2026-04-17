@@ -9,6 +9,13 @@ export type TipStatus =
 export type LeadSource = "FACEBOOK" | "INSTAGRAM" | "X" | "WEB" | "MANUAL";
 export type ReviewDecision = "APPROVED" | "REJECTED" | "NEEDS_MORE_INFO";
 export type PrivacyLevel = "PUBLIC" | "LIMITED" | "PRIVATE";
+export type MonitoringMatchType =
+  | "NAME"
+  | "NICKNAME"
+  | "HASHTAG"
+  | "PLACE"
+  | "KEYWORD"
+  | "MANUAL_IMPORT";
 export type LeadStatus =
   | "NEW"
   | "UNDER_REVIEW"
@@ -58,6 +65,7 @@ export type DemoCaseUpdate = {
 export type DemoTip = {
   id: string;
   caseId: string;
+  caseName?: string;
   description: string;
   imageUrl?: string;
   seenAt: string;
@@ -75,8 +83,10 @@ export type DemoTip = {
 export type DemoMonitoringHit = {
   id: string;
   caseId: string;
+  caseName?: string;
   source: LeadSource;
   sourceLabel: string;
+  matchType?: MonitoringMatchType;
   query: string;
   textSnippet: string;
   handle?: string;
@@ -91,17 +101,21 @@ export type DemoMonitoringHit = {
 export type DemoLead = {
   id: string;
   caseId: string;
+  caseName?: string;
+  tipId?: string;
   title: string;
   snippet: string;
   source: LeadSource;
   sourceLabel: string;
   confidenceScore: number;
   similarityScore?: number;
+  similarityNotes?: string;
   status: LeadStatus;
   occurredAt: string;
   handle?: string;
   url?: string;
   mediaThumbnailUrl?: string;
+  tipImageUrl?: string;
   location: DemoLocation;
   notes: string;
   audit: {

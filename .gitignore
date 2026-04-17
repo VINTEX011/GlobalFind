@@ -27,6 +27,8 @@ dev-server.log
 _api-staging/
 AGENTS.md
 CLAUDE.md
+.runtime/
+public/uploads/
 
 # debug
 npm-debug.log*

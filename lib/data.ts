@@ -1,3 +1,5 @@
+import { unstable_noStore as noStore } from "next/cache";
+
 import {
   demoCases,
   demoLeads,
@@ -6,7 +8,47 @@ import {
   demoTips,
   demoUsers,
 } from "@/lib/mock-data";
+import { readRuntimeStore } from "@/lib/server/runtime-store";
 import { type DemoCase, type DemoLead, type DemoMonitoringHit, type DemoTip } from "@/lib/types";
+
+function mergeById<T extends { id: string }>(base: T[], runtime: T[]) {
+  const merged = new Map(base.map((entry) => [entry.id, entry]));
+
+  for (const entry of runtime) {
+    merged.set(entry.id, entry);
+  }
+
+  return [...merged.values()];
+}
+
+async function getSnapshot() {
+  noStore();
+
+  const runtime = await readRuntimeStore();
+
+  return {
+    cases: mergeById(demoCases, runtime.cases).sort(
+      (left, right) =>
+        new Date(right.lastSeenAt).getTime() - new Date(left.lastSeenAt).getTime(),
+    ),
+    tips: mergeById(demoTips, runtime.tips).sort(
+      (left, right) =>
+        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    ),
+    leads: mergeById(demoLeads, runtime.leads).sort(
+      (left, right) =>
+        new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime(),
+    ),
+    hits: mergeById(demoMonitoringHits, runtime.monitoringHits).sort(
+      (left, right) =>
+        new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime(),
+    ),
+    notifications: mergeById(demoNotifications, runtime.notifications).sort(
+      (left, right) =>
+        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    ),
+  };
+}
 
 export async function getUsers() {
   return demoUsers;
@@ -17,37 +59,43 @@ export async function getUserByEmail(email: string) {
 }
 
 export async function getPublicCases() {
-  return demoCases.filter((entry) => entry.privacyLevel !== "PRIVATE");
+  const { cases } = await getSnapshot();
+  return cases.filter((entry) => entry.privacyLevel !== "PRIVATE");
 }
 
 export async function getCases() {
-  return demoCases;
+  const { cases } = await getSnapshot();
+  return cases;
 }
 
 export async function getCaseBySlug(slug: string) {
-  return demoCases.find((entry) => entry.slug === slug) ?? null;
+  const { cases } = await getSnapshot();
+  return cases.find((entry) => entry.slug === slug) ?? null;
 }
 
 export async function getCaseById(id: string) {
-  return demoCases.find((entry) => entry.id === id) ?? null;
+  const { cases } = await getSnapshot();
+  return cases.find((entry) => entry.id === id) ?? null;
 }
 
 export async function getTips(caseId?: string) {
-  return caseId ? demoTips.filter((entry) => entry.caseId === caseId) : demoTips;
+  const { tips } = await getSnapshot();
+  return caseId ? tips.filter((entry) => entry.caseId === caseId) : tips;
 }
 
 export async function getMonitoringHits(caseId?: string) {
-  return caseId
-    ? demoMonitoringHits.filter((entry) => entry.caseId === caseId)
-    : demoMonitoringHits;
+  const { hits } = await getSnapshot();
+  return caseId ? hits.filter((entry) => entry.caseId === caseId) : hits;
 }
 
 export async function getLeads(caseId?: string) {
-  return caseId ? demoLeads.filter((entry) => entry.caseId === caseId) : demoLeads;
+  const { leads } = await getSnapshot();
+  return caseId ? leads.filter((entry) => entry.caseId === caseId) : leads;
 }
 
 export async function getNotifications() {
-  return demoNotifications;
+  const { notifications } = await getSnapshot();
+  return notifications;
 }
 
 export async function getCaseBundle(caseReference: string) {
@@ -67,10 +115,11 @@ export async function getCaseBundle(caseReference: string) {
 }
 
 export async function getDashboardStats() {
-  const activeCases = demoCases.filter((entry) => entry.status === "ACTIVE").length;
-  const escalatedLeads = demoLeads.filter((entry) => entry.status === "ESCALATED").length;
-  const underReviewTips = demoTips.filter((entry) => entry.status === "UNDER_REVIEW").length;
-  const unreadNotifications = demoNotifications.filter((entry) => !entry.read).length;
+  const { cases, leads, tips, notifications } = await getSnapshot();
+  const activeCases = cases.filter((entry) => entry.status === "ACTIVE").length;
+  const escalatedLeads = leads.filter((entry) => entry.status === "ESCALATED").length;
+  const underReviewTips = tips.filter((entry) => entry.status === "UNDER_REVIEW").length;
+  const unreadNotifications = notifications.filter((entry) => !entry.read).length;
 
   return [
     {
@@ -101,7 +150,9 @@ export async function getDashboardStats() {
 }
 
 export async function getSightingMarkers() {
-  return demoLeads.map((lead) => ({
+  const { leads } = await getSnapshot();
+
+  return leads.map((lead) => ({
     id: lead.id,
     title: lead.title,
     latitude: lead.location.latitude,
