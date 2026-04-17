@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+:root {
+  --font-inter: "Aptos", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-plus-jakarta: "Trebuchet MS", "Aptos Display", "Segoe UI", sans-serif;
+  --background: #f6f6f3;
+  --foreground: #131514;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --muted: #ecece6;
+  --muted-foreground: #646663;
+  --border: #d9d9d0;
+  --accent: #23baa7;
+  --accent-foreground: #041311;
+  --ring: #23baa7;
+}
+
+.dark {
+  --background: #0f1212;
+  --foreground: #f4f5f1;
+  --card: #161919;
+  --card-foreground: #f4f5f1;
+  --muted: #1e2322;
+  --muted-foreground: #96a09e;
+  --border: rgba(255, 255, 255, 0.1);
+  --accent: #31c8b4;
+  --accent-foreground: #061412;
+  --ring: #31c8b4;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-plus-jakarta);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(35, 186, 167, 0.06), transparent 20%),
+    linear-gradient(135deg, rgba(250, 204, 21, 0.05), transparent 40%),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-plus-jakarta), sans-serif;
+}
+
+::selection {
+  background: rgba(35, 186, 167, 0.25);
+}
+
+a {
+  text-decoration: none;
+}
+
+main {
+  position: relative;
+}
+
+.app-shell {
+  margin-inline: auto;
+  width: min(100%, 1280px);
+}
+
+.dashboard-shell {
+  position: relative;
+  background:
+    radial-gradient(circle at top left, rgba(35, 186, 167, 0.08), transparent 24%),
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 22%);
+}
+
+.section-shell {
+  margin-inline: auto;
+  width: min(100%, 1200px);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
